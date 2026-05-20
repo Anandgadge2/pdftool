@@ -56,6 +56,11 @@ st.markdown("""
         margin-bottom: 1rem;
         color: var(--primary-color);
     }
+    
+    /* Hide the Streamlit header (Deploy button and menu) */
+    .stApp > header {
+        visibility: hidden;
+    }
 </style>
 """, unsafe_allow_html=True)
 
