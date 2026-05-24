@@ -1,0 +1,38 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Markup {
+  id                    Int      @id @default(autoincrement())
+  pdf_name              String
+  pdf_url               String?  @default("")
+  page_number           Int
+  annotation_type       String   @default("Unknown")
+  comment_text          String?  @default("")
+  author                String?  @default("")
+  created_date          String?  @default("")
+  modified_date         String?  @default("")
+  rectangle_coordinates String?  @default("")
+  selected_text         String?  @default("")
+  assigned_to           String?  @default("Unassigned")
+  priority              String?  @default("Medium")
+  status                String?  @default("Pending")
+  remarks               String?  @default("")
+  color                 String?  @default("Yellow")
+  created_at            DateTime @default(now())
+
+  @@map("markups")
+}
+
+model Assignee {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  created_at DateTime @default(now())
+
+  @@map("assignees")
+}
