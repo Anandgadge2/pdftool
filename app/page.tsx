@@ -121,17 +121,17 @@ export default function HomePage() {
 
   // Compute metrics
   const metrics: DashboardMetrics = {
-    total:      markups.length,
-    pending:    markups.filter(m => m.status === 'Pending').length,
+    total: markups.length,
+    pending: markups.filter(m => m.status === 'Pending').length,
     inProgress: markups.filter(m => m.status === 'In Progress').length,
-    resolved:   markups.filter(m => m.status === 'Resolved').length,
-    closed:     markups.filter(m => m.status === 'Closed').length,
-    critical:   markups.filter(m => m.priority === 'Critical').length,
+    resolved: markups.filter(m => m.status === 'Resolved').length,
+    closed: markups.filter(m => m.status === 'Closed').length,
+    critical: markups.filter(m => m.priority === 'Critical').length,
   };
 
   // Unique values for filter dropdowns
-  const uniquePdfs   = [...new Set(markups.map(m => m.pdf_name))].filter(Boolean);
-  const uniqueTypes  = [...new Set(markups.map(m => m.annotation_type))].filter(Boolean);
+  const uniquePdfs = [...new Set(markups.map(m => m.pdf_name))].filter(Boolean);
+  const uniqueTypes = [...new Set(markups.map(m => m.annotation_type))].filter(Boolean);
 
   // ============================================================
   // Local-First Exporters Generators
@@ -139,7 +139,7 @@ export default function HomePage() {
   const generateMarkdown = (): string => {
     const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const pdfNames = [...new Set(markups.map(m => m.pdf_name))].join(', ');
-    
+
     let text = `# PDF Highlights & Annotations\n`;
     text += `*Generated on ${today} | Source PDFs: ${pdfNames || 'Various'}*\n\n`;
     text += `Total Highlights: **${markups.length}**\n\n---\n\n`;
@@ -160,17 +160,17 @@ export default function HomePage() {
       text += `## Page ${m.page_number} (${m.pdf_name})\n`;
       text += `> [!${getCalloutType(m.color)}] ${m.color || 'Yellow'} Highlight\n`;
       text += `> ${m.selected_text || `[${m.annotation_type} Annotation]`}\n\n`;
-      
+
       if (m.comment_text && !m.comment_text.startsWith('[')) {
         text += `**Note**: ${m.comment_text}\n\n`;
       }
-      
+
       text += `*Reviewer: ${m.author}* | *Status: ${m.status}* | *Priority: ${m.priority}*\n`;
       if (m.remarks) text += `*Remarks: ${m.remarks}*\n`;
-      
+
       text += `\n---\n\n`;
     });
-    
+
     return text.trim();
   };
 
@@ -179,13 +179,13 @@ export default function HomePage() {
     text += `Total Annotations: **${markups.length}**\n\n`;
     text += `| Page | Color | Highlight | Comment | Author | Status |\n`;
     text += `| --- | --- | --- | --- | --- | --- |\n`;
-    
+
     markups.forEach((m) => {
       const cleanHighlight = (m.selected_text || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
       const cleanComment = (m.comment_text || '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
       text += `| **${m.page_number}** | ${m.color || 'Yellow'} | ${cleanHighlight || `*${m.annotation_type}*`} | ${cleanComment.startsWith('[') ? '-' : cleanComment} | ${m.author} | \`${m.status}\` |\n`;
     });
-    
+
     return text;
   };
 
@@ -198,7 +198,7 @@ export default function HomePage() {
   const generateText = (): string => {
     const today = new Date().toLocaleString();
     let text = `==================================================\n`;
-    text += `PDF ANNOTATION REPORT - EXTRACTED LOCALLY\n`;
+    text += `PDF ANNOTATION REPORT - EXTRACTED LOCALY\n`;
     text += `Generated: ${today}\n`;
     text += `Total items: ${markups.length}\n`;
     text += `==================================================\n\n`;
@@ -241,7 +241,7 @@ export default function HomePage() {
     const content = getExportData();
     let extension = 'md';
     let mime = 'text/markdown';
-    
+
     if (exportTab === 'json') {
       extension = 'json';
       mime = 'application/json';
@@ -249,7 +249,7 @@ export default function HomePage() {
       extension = 'txt';
       mime = 'text/plain';
     }
-    
+
     const blob = new Blob([content], { type: `${mime};charset=utf-8;` });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -265,11 +265,11 @@ export default function HomePage() {
       {/* Re-designed elegant dynamic toasts */}
       <AnimatePresence>
         {uploadSuccess && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="toast toast-success" 
+            className="toast toast-success"
             role="alert"
           >
             <span>{uploadSuccess}</span>
@@ -294,7 +294,7 @@ export default function HomePage() {
         />
 
         <main className={`content-area ${sidebarOpen ? '' : 'sidebar-collapsed'}`}>
-          
+
           {/* Re-designed premium hero / header layout */}
           {markups.length === 0 ? (
             <div className="premium-hero">
@@ -334,7 +334,7 @@ export default function HomePage() {
                     aria-label="Open sidebar"
                   >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                      <line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" />
                     </svg>
                   </button>
                 )}
@@ -348,10 +348,10 @@ export default function HomePage() {
 
               {/* Re-designed premium layout controls & exports */}
               <div className="page-header-actions" style={{ gap: '0.625rem' }}>
-                
+
                 {/* View switcher toggle */}
                 <div className="view-toggle-pill">
-                  <button 
+                  <button
                     onClick={() => setViewMode('cards')}
                     className={`view-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
                     title="Reading Flow View"
@@ -359,7 +359,7 @@ export default function HomePage() {
                     <List size={14} />
                     <span>Reading Flow</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => setViewMode('table')}
                     className={`view-toggle-btn ${viewMode === 'table' ? 'active' : ''}`}
                     title="Review Dashboard View"
@@ -407,9 +407,9 @@ export default function HomePage() {
           ) : markups.length === 0 ? (
             <EmptyState onOpenSidebar={() => setSidebarOpen(true)} />
           ) : viewMode === 'cards' ? (
-            <ReadingFlow 
-              markups={markups} 
-              onInspect={setSelectedMarkup} 
+            <ReadingFlow
+              markups={markups}
+              onInspect={setSelectedMarkup}
             />
           ) : (
             <IssueTable
@@ -438,12 +438,12 @@ export default function HomePage() {
       <AnimatePresence>
         {exportOpen && (
           <div className="modal-overlay" onClick={() => setExportOpen(false)}>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 15 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="modal-content export-hub-modal" 
+              className="modal-content export-hub-modal"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -460,7 +460,7 @@ export default function HomePage() {
               {/* Tabs list */}
               <div className="modal-body-container">
                 <div className="export-tabs-sidebar">
-                  <button 
+                  <button
                     onClick={() => setExportTab('markdown')}
                     className={`export-sidebar-btn ${exportTab === 'markdown' ? 'active' : ''}`}
                   >
@@ -471,7 +471,7 @@ export default function HomePage() {
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={() => setExportTab('notion')}
                     className={`export-sidebar-btn ${exportTab === 'notion' ? 'active' : ''}`}
                   >
@@ -482,7 +482,7 @@ export default function HomePage() {
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={() => setExportTab('json')}
                     className={`export-sidebar-btn ${exportTab === 'json' ? 'active' : ''}`}
                   >
@@ -493,7 +493,7 @@ export default function HomePage() {
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={() => setExportTab('text')}
                     className={`export-sidebar-btn ${exportTab === 'text' ? 'active' : ''}`}
                   >
@@ -503,9 +503,9 @@ export default function HomePage() {
                       <span className="sidebar-tab-desc">Simple clean format</span>
                     </div>
                   </button>
-                  
+
                   <div className="divider-hr" style={{ margin: '0.75rem 0' }} />
-                  
+
                   <a href="/api/export/csv" className="export-sidebar-btn link-btn">
                     <span className="sidebar-tab-icon">📊</span>
                     <div style={{ textAlign: 'left' }}>
@@ -513,7 +513,7 @@ export default function HomePage() {
                       <span className="sidebar-tab-desc">Standard table format</span>
                     </div>
                   </a>
-                  
+
                   <a href="/api/export/excel" className="export-sidebar-btn link-btn">
                     <span className="sidebar-tab-icon">📈</span>
                     <div style={{ textAlign: 'left' }}>
@@ -528,14 +528,14 @@ export default function HomePage() {
                   <div className="preview-header">
                     <span className="preview-label">Live Preview ({markups.length} Items)</span>
                     <div className="preview-actions">
-                      <button 
+                      <button
                         onClick={handleCopyExport}
                         className={`btn btn-secondary btn-sm ${exportCopied ? 'success' : ''}`}
                       >
                         {exportCopied ? <Check size={13} /> : <Copy size={13} />}
                         <span>{exportCopied ? 'Copied!' : 'Copy Clipboard'}</span>
                       </button>
-                      <button 
+                      <button
                         onClick={handleDownloadExport}
                         className="btn btn-primary btn-sm"
                       >
