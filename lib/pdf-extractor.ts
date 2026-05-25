@@ -191,6 +191,15 @@ function ensureDOMMatrixPolyfill() {
   }
 }
 
+async function ensurePdfWorker() {
+  if ((globalThis as any).pdfjsWorker?.WorkerMessageHandler) {
+    return;
+  }
+
+  const workerModule = await import('pdfjs-dist/legacy/build/pdf.worker.mjs');
+  (globalThis as any).pdfjsWorker = workerModule;
+}
+
 /**
  * Extract annotations from a PDF buffer using pdf.js
  * Returns a flat list of ExtractedAnnotation ready for DB insert.
@@ -210,13 +219,7 @@ export async function extractAnnotations(
 
   const pdfjs = (pdfjsLib as any).default ?? pdfjsLib;
 
-  // Set workerSrc to a valid CDN path to satisfy PDF.js's fake worker validation check.
-  // Since we are running in Node.js/serverless and useWorkerFetch is false,
-  // PDF.js will fall back to using the fake worker synchronously in the same thread.
-  if (pdfjs.GlobalWorkerOptions) {
-    const version = pdfjs.version || '5.6.205';
-    pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${version}/legacy/build/pdf.worker.min.mjs`;
-  }
+  await ensurePdfWorker();
 
   const loadingTask = pdfjs.getDocument({
     data: new Uint8Array(buffer),
