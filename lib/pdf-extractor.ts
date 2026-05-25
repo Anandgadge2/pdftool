@@ -145,11 +145,26 @@ export async function extractAnnotations(
   pdfName: string,
   pdfUrl: string = ''
 ): Promise<ExtractedAnnotation[]> {
+  // pdf.js expects some DOM-like globals even in Node/serverless runtimes.
+  // Provide them when available to avoid runtime failures like:
+  // "ReferenceError: DOMMatrix is not defined".
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    const canvasModule = await import('@napi-rs/canvas').catch(() => null);
+    if (canvasModule) {
+      if (typeof globalThis.DOMMatrix === 'undefined' && (canvasModule as any).DOMMatrix) {
+        (globalThis as any).DOMMatrix = (canvasModule as any).DOMMatrix;
+      }
+      if (typeof (globalThis as any).ImageData === 'undefined' && (canvasModule as any).ImageData) {
+        (globalThis as any).ImageData = (canvasModule as any).ImageData;
+      }
+      if (typeof (globalThis as any).Path2D === 'undefined' && (canvasModule as any).Path2D) {
+        (globalThis as any).Path2D = (canvasModule as any).Path2D;
+      }
+    }
+  }
+
   // Dynamic import — pdf.js is an ESM package with Node.js support
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs').catch(async () => {
-    // fallback path
-    return await import('pdfjs-dist');
-  });
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
   // In serverless Node runtimes (e.g. Vercel), resolving a worker file path can fail
   // because bundlers may not preserve node_modules file locations. We disable workers
