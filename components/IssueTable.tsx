@@ -208,7 +208,7 @@ export default function IssueTable({
               fontSize: '0.8125rem',
               height: '36px',
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(15, 23, 42, 0.3)',
+              background: 'var(--bg-input)',
               border: '1px solid var(--border-primary)',
               width: '100%'
             }}
@@ -228,6 +228,7 @@ export default function IssueTable({
         <table className="data-table">
           <thead>
             <tr>
+              <th style={{ width: '68px' }}>Sr. No.</th>
               <th onClick={() => handleSort('id')} style={{ cursor: 'pointer', width: '60px' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                   ID <ArrowUpDown size={10} />
@@ -272,13 +273,16 @@ export default function IssueTable({
           <tbody>
             {paginatedMarkups.length === 0 ? (
               <tr>
-                <td colSpan={11} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
+                <td colSpan={12} style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
                   No issues match the search criteria.
                 </td>
               </tr>
             ) : (
-              paginatedMarkups.map((m) => (
+              paginatedMarkups.map((m, rowIndex) => (
                 <tr key={m.id}>
+                  <td className="mono" style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {startIndex + rowIndex + 1}
+                  </td>
                   {/* ID */}
                   <td className="mono" style={{ fontSize: '0.75rem', fontWeight: 600 }}>#{m.id}</td>
                   
@@ -397,7 +401,7 @@ export default function IssueTable({
                         autoFocus
                         style={{
                           width: '100%',
-                          background: 'var(--bg-tertiary)',
+                          background: 'var(--bg-secondary)',
                           color: 'var(--text-primary)',
                           border: '1px solid var(--accent-blue)',
                           borderRadius: 'var(--radius-sm)',
