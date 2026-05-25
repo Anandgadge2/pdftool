@@ -12,7 +12,7 @@ import {
   rawToPipelineNotes,
   boxOverlapRatio,
 } from '@/lib/pdf-review-pipeline';
-import type { NoteSource, PipelineNote, RawVisionNote } from '@/lib/pdf-review-types';
+import type { PipelineNote, RawVisionNote } from '@/lib/pdf-review-types';
 import { MAX_CROPS_PER_PAGE } from '@/lib/pdf-review-types';
 
 export interface PageExtractionInput {

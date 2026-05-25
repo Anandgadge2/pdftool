@@ -5,7 +5,7 @@ import {
   VISION_STRICT_JSON_RETRY,
 } from '@/services/visionPrompts';
 import { parseVisionNotesJson } from '@/lib/pdf-review-pipeline';
-import type { VisionAnalyzeOptions, VisionProvider, VisionProviderResult } from './types';
+import type { VisionProvider } from './types';
 import { VisionApiError, classifyVisionError } from './types';
 
 const FALLBACK_MODEL = 'gemini-2.0-flash';

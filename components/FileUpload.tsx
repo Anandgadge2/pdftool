@@ -76,9 +76,9 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
       } else {
         throw new Error(data.error || 'Failed to process annotations.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      setError(err.message || 'An unexpected error occurred during processing.');
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred during processing.');
     } finally {
       setUploading(false);
     }
