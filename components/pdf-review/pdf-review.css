@@ -1,0 +1,493 @@
+/* PDF Review — Light theme */
+.pdf-review-page {
+  --pr-bg: #f8fafc;
+  --pr-surface: #ffffff;
+  --pr-border: #e2e8f0;
+  --pr-text: #0f172a;
+  --pr-muted: #64748b;
+  --pr-accent: #2563eb;
+  --pr-accent-hover: #1d4ed8;
+  --pr-success: #059669;
+  --pr-warning: #d97706;
+  --pr-error: #dc2626;
+  --pr-highlight: rgba(37, 99, 235, 0.15);
+  --pr-shadow: 0 1px 3px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(15, 23, 42, 0.04);
+
+  min-height: 100vh;
+  background: var(--pr-bg);
+  color: var(--pr-text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.pdf-review-page a {
+  color: var(--pr-accent);
+}
+
+.pdf-review-header {
+  background: var(--pr-surface);
+  border-bottom: 1px solid var(--pr-border);
+  padding: 1rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  box-shadow: var(--pr-shadow);
+}
+
+.pdf-review-header h1 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.pdf-review-header p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--pr-muted);
+}
+
+.pdf-review-main {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.pdf-review-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .pdf-review-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pr-card {
+  background: var(--pr-surface);
+  border: 1px solid var(--pr-border);
+  border-radius: 12px;
+  box-shadow: var(--pr-shadow);
+  overflow: hidden;
+}
+
+.pr-card-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--pr-border);
+  font-weight: 600;
+  font-size: 0.9375rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.pr-card-body {
+  padding: 1.25rem;
+}
+
+.pr-upload-zone {
+  border: 2px dashed var(--pr-border);
+  border-radius: 10px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.pr-upload-zone:hover,
+.pr-upload-zone.drag-over {
+  border-color: var(--pr-accent);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+.pr-upload-zone.uploading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.pr-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border: 1px solid var(--pr-border);
+  background: var(--pr-surface);
+  color: var(--pr-text);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.pr-btn:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.pr-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pr-btn-primary {
+  background: var(--pr-accent);
+  border-color: var(--pr-accent);
+  color: #fff;
+}
+
+.pr-btn-primary:hover:not(:disabled) {
+  background: var(--pr-accent-hover);
+  border-color: var(--pr-accent-hover);
+}
+
+.pr-btn-danger {
+  color: var(--pr-error);
+  border-color: #fecaca;
+}
+
+.pr-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.pr-status-uploaded { background: #e0e7ff; color: #3730a3; }
+.pr-status-processing { background: #fef3c7; color: #92400e; }
+.pr-status-completed { background: #d1fae5; color: #065f46; }
+.pr-status-failed { background: #fee2e2; color: #991b1b; }
+
+.pr-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--pr-border);
+  border-top-color: var(--pr-accent);
+  border-radius: 50%;
+  animation: pr-spin 0.7s linear infinite;
+}
+
+@keyframes pr-spin {
+  to { transform: rotate(360deg); }
+}
+
+.pr-progress-bar {
+  height: 6px;
+  background: var(--pr-border);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.75rem;
+}
+
+.pr-progress-fill {
+  height: 100%;
+  background: var(--pr-accent);
+  border-radius: 999px;
+  transition: width 0.3s ease;
+  animation: pr-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pr-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pr-preview-container {
+  position: relative;
+  background: #f1f5f9;
+  border-radius: 8px;
+  overflow: auto;
+  max-height: 70vh;
+  min-height: 320px;
+}
+
+.pr-preview-image {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.pr-overlay-box {
+  position: absolute;
+  border: 2px solid var(--pr-accent);
+  background: var(--pr-highlight);
+  pointer-events: none;
+  border-radius: 4px;
+  transition: box-shadow 0.15s;
+}
+
+.pr-overlay-box.active {
+  border-color: #1d4ed8;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35);
+  z-index: 2;
+}
+
+.pr-notes-list {
+  max-height: calc(70vh + 80px);
+  overflow-y: auto;
+}
+
+.pr-note-item {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--pr-border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pr-note-item:hover,
+.pr-note-item.selected {
+  background: #f1f5f9;
+}
+
+.pr-note-item.selected {
+  border-left: 3px solid var(--pr-accent);
+}
+
+.pr-note-type {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--pr-muted);
+}
+
+.pr-confidence {
+  font-size: 0.75rem;
+  color: var(--pr-muted);
+}
+
+.pr-confidence.low {
+  color: var(--pr-warning);
+}
+
+.pr-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--pr-border);
+  background: #f8fafc;
+}
+
+.pr-select,
+.pr-input {
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--pr-border);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  background: var(--pr-surface);
+  color: var(--pr-text);
+}
+
+.pr-empty {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--pr-muted);
+}
+
+.pr-error {
+  padding: 0.75rem 1rem;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: var(--pr-error);
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.pr-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border-top: 1px solid var(--pr-border);
+}
+
+.pr-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+.pr-modal {
+  background: var(--pr-surface);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 480px;
+  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.15);
+}
+
+.pr-modal h3 {
+  margin: 0 0 1rem;
+  font-size: 1.125rem;
+}
+
+.pr-form-group {
+  margin-bottom: 1rem;
+}
+
+.pr-form-group label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  color: var(--pr-muted);
+}
+
+.pr-textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--pr-border);
+  border-radius: 6px;
+  resize: vertical;
+  font-size: 0.875rem;
+}
+
+.pr-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
+.pr-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--pr-border);
+  background: #f8fafc;
+}
+
+/* ── Mobile aesthetic enhancements ───────────────────────────── */
+.pdf-review-page {
+  background: linear-gradient(165deg, #f8fafc 0%, #eef2ff 40%, #f8fafc 100%);
+}
+
+.pdf-review-header {
+  position: sticky;
+  top: var(--app-tabs-height, 52px);
+  z-index: 40;
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.pdf-review-main {
+  padding: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right))
+    max(1.5rem, env(safe-area-inset-bottom));
+}
+
+.pr-card {
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+  transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.pr-btn {
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pr-upload-zone {
+  border-radius: 14px;
+  padding: clamp(1.5rem, 6vw, 2.5rem) 1rem;
+}
+
+@media (max-width: 768px) {
+  .pdf-review-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.875rem 1rem;
+  }
+
+  .pdf-review-header h1 {
+    font-size: 1.1rem;
+  }
+
+  .pdf-review-grid {
+    gap: 1rem;
+  }
+
+  .pr-preview-container {
+    max-height: 55vh;
+    min-height: 240px;
+    border-radius: 12px;
+  }
+
+  .pr-notes-panel-mobile {
+    position: sticky;
+    bottom: 0;
+    z-index: 30;
+    max-height: 42vh;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(15, 23, 42, 0.12);
+  }
+
+  .pr-notes-list {
+    max-height: 36vh;
+  }
+
+  .pr-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pr-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pr-select {
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+
+  .pr-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .pr-modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+  }
+
+  .pr-modal::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    margin: 0 auto 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pdf-review-main {
+    padding: 0.75rem;
+  }
+
+  .pr-card-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

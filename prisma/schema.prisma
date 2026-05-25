@@ -36,3 +36,61 @@ model Assignee {
 
   @@map("assignees")
 }
+
+model PdfDocument {
+  id                   Int                @id @default(autoincrement())
+  original_file_name   String
+  cloudinary_public_id String?
+  cloudinary_url       String?
+  total_pages          Int                @default(0)
+  status               String             @default("uploaded")
+  extraction_type      String?            @default("none")
+  error_message        String?
+  created_at           DateTime           @default(now())
+  updated_at           DateTime           @updatedAt
+  pages                PdfPage[]
+  notes                PdfExtractedNote[]
+
+  @@map("pdf_documents")
+}
+
+model PdfPage {
+  id                   Int                @id @default(autoincrement())
+  document_id          Int
+  page_number          Int
+  cloudinary_public_id String?
+  image_url            String?
+  width                Int?
+  height               Int?
+  created_at           DateTime           @default(now())
+  document             PdfDocument        @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  notes                PdfExtractedNote[]
+
+  @@unique([document_id, page_number])
+  @@map("pdf_pages")
+}
+
+model PdfExtractedNote {
+  id             Int         @id @default(autoincrement())
+  document_id    Int
+  page_id        Int?
+  page_number    Int
+  note_type      String
+  extracted_text String?     @default("")
+  summary        String?     @default("")
+  x              Float?
+  y              Float?
+  width          Float?
+  height         Float?
+  confidence     Float?      @default(0)
+  author         String?
+  subject        String?
+  is_manual      Boolean     @default(false)
+  raw_data       Json?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+  document       PdfDocument @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  page           PdfPage?    @relation(fields: [page_id], references: [id], onDelete: SetNull)
+
+  @@map("pdf_extracted_notes")
+}

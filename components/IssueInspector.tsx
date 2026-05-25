@@ -42,7 +42,7 @@ export default function IssueInspector({
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay inspector-sheet" onClick={onClose}>
       <motion.div
         className="modal-content"
         onClick={(e) => e.stopPropagation()}

@@ -224,7 +224,9 @@ export default function IssueTable({
       </div>
 
       {/* Main Table */}
-      <div className="table-container">
+      <div className="table-scroll-wrap">
+        <p className="table-scroll-hint">Swipe horizontally to see all columns</p>
+        <div className="table-container">
         <table className="data-table">
           <thead>
             <tr>
@@ -442,6 +444,7 @@ export default function IssueTable({
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Pagination Controls */}

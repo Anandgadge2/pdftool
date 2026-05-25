@@ -1,5 +1,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import './mobile-aesthetic.css';
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
 
 export const metadata: Metadata = {
   title: 'PDF Markup Extractor & Issue Tracker',

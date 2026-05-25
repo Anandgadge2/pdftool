@@ -82,6 +82,7 @@ export default function Dashboard({ metrics, loading }: DashboardProps) {
           className="metric-card"
           variants={cardVariants}
           whileHover={{ y: -4 }}
+          whileTap={{ scale: 0.98 }}
           style={{ transformStyle: 'preserve-3d' }}
         >
           <div className={`metric-icon ${colorClass}`}>

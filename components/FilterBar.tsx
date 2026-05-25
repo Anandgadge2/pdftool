@@ -100,26 +100,15 @@ export default function FilterBar({
 
   return (
     <div ref={containerRef} className="filter-bar" style={{ position: 'relative', zIndex: 10 }}>
-      {/* Label/Icon */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600, paddingRight: '0.5rem' }}>
-        <Filter size={16} style={{ color: 'var(--accent-blue)' }} />
+      <div className="filter-bar-label">
+        <Filter size={16} style={{ color: 'var(--accent-blue)' }} aria-hidden />
         <span>Filters</span>
         {activeCount > 0 && (
-          <span style={{
-            background: 'var(--accent-blue)',
-            color: 'white',
-            fontSize: '0.7rem',
-            padding: '0.125rem 0.375rem',
-            borderRadius: 'var(--radius-full)',
-            fontWeight: 700
-          }}>
-            {activeCount}
-          </span>
+          <span className="filter-count-badge">{activeCount}</span>
         )}
       </div>
 
-      {/* Selectors */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', flexGrow: 1 }}>
+      <div className="filter-bar-scroll">
         {filterConfigs.map(({ key, label, options }) => {
           const selected = (filters[key] as string[]) || [];
           const isOpen = activeDropdown === key;
@@ -227,30 +216,22 @@ export default function FilterBar({
         })}
       </div>
 
-      {/* Clear All Button */}
       {activeCount > 0 && (
-        <button
-          type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={handleClearAll}
-          style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', color: '#f87171', gap: '0.25rem' }}
-        >
-          <RotateCcw size={12} />
-          Clear All
-        </button>
+        <div className="filter-bar-actions">
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={handleClearAll}
+            style={{ fontSize: '0.75rem', padding: '0.375rem 0.75rem', color: '#f87171', gap: '0.25rem', whiteSpace: 'nowrap' }}
+          >
+            <RotateCcw size={12} />
+            Clear
+          </button>
+        </div>
       )}
 
-      {/* Display Active Chips Underneath */}
       {activeCount > 0 && (
-        <div style={{
-          width: '100%',
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.375rem',
-          marginTop: '0.5rem',
-          borderTop: '1px solid var(--border-subtle)',
-          paddingTop: '0.75rem'
-        }}>
+        <div className="filter-bar-active-chips">
           {filterConfigs.map(({ key, label }) => {
             const selected = (filters[key] as string[]) || [];
             if (selected.length === 0) return null;

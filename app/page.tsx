@@ -9,16 +9,39 @@ import IssueTable from '@/components/IssueTable';
 import EmptyState from '@/components/EmptyState';
 import IssueInspector from '@/components/IssueInspector';
 import ReadingFlow from '@/components/ReadingFlow';
+import PdfReviewApp from '@/components/pdf-review/PdfReviewApp';
+import AppModeTabs, { type AppTab } from '@/components/AppModeTabs';
 import { LayoutGrid, List, Download, Copy, Check, X, FileText, Sparkles, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function HomePage() {
+  const [appTab, setAppTab] = useState<AppTab>('tracker');
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'review') setAppTab('review');
+  }, []);
+
+  // Auto-collapse sidebar on tablet/mobile; expand on desktop
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1025px)');
+    const updateSidebar = () => setSidebarOpen(mq.matches);
+    updateSidebar();
+    mq.addEventListener('change', updateSidebar);
+    return () => mq.removeEventListener('change', updateSidebar);
+  }, []);
+
+  const switchAppTab = (tab: AppTab) => {
+    setAppTab(tab);
+    const path = tab === 'review' ? '/?tab=review' : '/';
+    window.history.replaceState(null, '', path);
+  };
   const [markups, setMarkups] = useState<Markup[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<MarkupFilters>({});
   const [assignees, setAssignees] = useState<Assignee[]>([]);
   const [selectedMarkup, setSelectedMarkup] = useState<Markup | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
 
   // Re-designed premium view states
@@ -260,8 +283,19 @@ export default function HomePage() {
     document.body.removeChild(link);
   };
 
+  if (appTab === 'review') {
+    return (
+      <div className="app-container app-with-tabs">
+        <AppModeTabs active={appTab} onChange={switchAppTab} />
+        <PdfReviewApp embedded />
+      </div>
+    );
+  }
+
   return (
-    <div className="app-container">
+    <div className="app-container app-with-tabs">
+      <AppModeTabs active={appTab} onChange={switchAppTab} />
+
       {/* Re-designed elegant dynamic toasts */}
       <AnimatePresence>
         {uploadSuccess && (
@@ -281,13 +315,9 @@ export default function HomePage() {
       <div className="main-content">
         <Sidebar
           isOpen={sidebarOpen}
-          onToggle={() => setSidebarOpen(p => !p)}
+          onToggle={() => setSidebarOpen((p) => !p)}
           onUploadComplete={handleUploadComplete}
           onClearDb={handleClearDb}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          uniquePdfs={uniquePdfs}
-          uniqueTypes={uniqueTypes}
           assignees={assignees}
           onAssigneesChange={fetchAssignees}
           markupCount={markups.length}
@@ -323,8 +353,8 @@ export default function HomePage() {
               </div>
             </div>
           ) : (
-            <header className="page-header premium-header-bar">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <header className="page-header premium-header-bar mobile-toolbar">
+              <div className="mobile-toolbar-title" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 {!sidebarOpen && (
                   <button
                     id="open-sidebar-btn"
@@ -346,11 +376,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Re-designed premium layout controls & exports */}
-              <div className="page-header-actions" style={{ gap: '0.625rem' }}>
-
-                {/* View switcher toggle */}
-                <div className="view-toggle-pill">
+              <div className="mobile-toolbar-actions page-header-actions">
+                <div className="mobile-action-row view-toggle-pill">
                   <button
                     onClick={() => setViewMode('cards')}
                     className={`view-toggle-btn ${viewMode === 'cards' ? 'active' : ''}`}
@@ -371,7 +398,6 @@ export default function HomePage() {
 
                 <div className="divider-vr" />
 
-                {/* Local-first export hub trigger */}
                 <button
                   onClick={() => setExportOpen(true)}
                   className="btn btn-primary btn-sm btn-glow"
