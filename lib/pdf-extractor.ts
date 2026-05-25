@@ -137,6 +137,61 @@ function getAnnotationColor(colorArray?: any): string {
 }
 
 /**
+ * Polyfill DOMMatrix for Node.js / Vercel serverless environments.
+ * pdfjs-dist internally references DOMMatrix which only exists in browsers.
+ */
+function ensureDOMMatrixPolyfill() {
+  if (typeof globalThis.DOMMatrix === 'undefined') {
+    // Minimal stub — pdfjs uses it for coordinate transforms but we only
+    // need annotation metadata, not rendering, so a no-op is fine.
+    (globalThis as any).DOMMatrix = class DOMMatrix {
+      a = 1; b = 0; c = 0; d = 1; e = 0; f = 0;
+      m11 = 1; m12 = 0; m13 = 0; m14 = 0;
+      m21 = 0; m22 = 1; m23 = 0; m24 = 0;
+      m31 = 0; m32 = 0; m33 = 1; m34 = 0;
+      m41 = 0; m42 = 0; m43 = 0; m44 = 1;
+      is2D = true; isIdentity = true;
+
+      constructor(init?: any) {
+        if (Array.isArray(init) && init.length === 6) {
+          [this.a, this.b, this.c, this.d, this.e, this.f] = init;
+          this.m11 = this.a; this.m12 = this.b;
+          this.m21 = this.c; this.m22 = this.d;
+          this.m41 = this.e; this.m42 = this.f;
+        }
+      }
+
+      inverse() { return new DOMMatrix(); }
+      multiply() { return new DOMMatrix(); }
+      translate() { return new DOMMatrix(); }
+      scale() { return new DOMMatrix(); }
+      rotate() { return new DOMMatrix(); }
+      transformPoint(p: any) { return p || { x: 0, y: 0, z: 0, w: 1 }; }
+      static fromMatrix() { return new DOMMatrix(); }
+      static fromFloat32Array() { return new DOMMatrix(); }
+      static fromFloat64Array() { return new DOMMatrix(); }
+    };
+  }
+
+  // Also stub Path2D if missing (pdfjs may reference it)
+  if (typeof globalThis.Path2D === 'undefined') {
+    (globalThis as any).Path2D = class Path2D {
+      constructor(_d?: string | Path2D) {}
+      addPath() {}
+      closePath() {}
+      moveTo() {}
+      lineTo() {}
+      bezierCurveTo() {}
+      quadraticCurveTo() {}
+      arc() {}
+      arcTo() {}
+      ellipse() {}
+      rect() {}
+    };
+  }
+}
+
+/**
  * Extract annotations from a PDF buffer using pdf.js
  * Returns a flat list of ExtractedAnnotation ready for DB insert.
  */
@@ -145,24 +200,28 @@ export async function extractAnnotations(
   pdfName: string,
   pdfUrl: string = ''
 ): Promise<ExtractedAnnotation[]> {
-  // Dynamic import — pdf.js is an ESM package with Node.js support
+  // Polyfill browser globals before importing pdfjs-dist
+  ensureDOMMatrixPolyfill();
+
+  // Dynamic import — pdf.js is an ESM package
   const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs').catch(async () => {
-    // fallback path
     return await import('pdfjs-dist');
   });
 
-  // Set the worker source path using absolute resolution for Node.js compatibility
   const pdfjs = (pdfjsLib as any).default ?? pdfjsLib;
+
+  // Disable the web worker — not usable in serverless environments
   if (pdfjs.GlobalWorkerOptions) {
-    const path = await import('path');
-    const { pathToFileURL } = await import('url');
-    const resolvedPath = path.resolve(
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'
-    );
-    pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(resolvedPath).href;
+    pdfjs.GlobalWorkerOptions.workerSrc = '';
   }
 
-  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer), useWorkerFetch: false, isEvalSupported: false });
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    disableFontFace: true,
+    useSystemFonts: false,
+  });
   const doc = await loadingTask.promise;
 
   const results: ExtractedAnnotation[] = [];
