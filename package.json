@@ -1,0 +1,9 @@
+{
+  "name": "pdftool-streamlit",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "vercel-build": "echo 'Skipping Next.js build: this repository is a Streamlit (Python) app.'",
+    "build": "echo 'No frontend bundling step required for Streamlit app.'"
+  }
+}
