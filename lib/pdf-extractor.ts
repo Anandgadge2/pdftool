@@ -145,10 +145,9 @@ export async function extractAnnotations(
   pdfName: string,
   pdfUrl: string = ''
 ): Promise<ExtractedAnnotation[]> {
-  // Prefer node-targeted pdf.js bundle to avoid browser DOM globals in serverless.
-  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.node.mjs').catch(async () => {
-    return await import('pdfjs-dist/legacy/build/pdf.mjs');
-  });
+  // Use legacy ESM build shipped by pdfjs-dist. The pdf.node entry is not
+  // present in all installed versions and breaks Turbopack resolution.
+  const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
 
   // In serverless Node runtimes (e.g. Vercel), resolving a worker file path can fail
   // because bundlers may not preserve node_modules file locations. We disable workers
