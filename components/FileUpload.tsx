@@ -41,7 +41,7 @@ export default function FileUpload({ onUploadComplete }: FileUploadProps) {
   };
 
   const uploadFile = async (file: File) => {
-    if (file.type !== 'application/pdf') {
+    if (file.type && file.type !== 'application/pdf') {
       setError('Please upload a valid PDF file.');
       return;
     }

@@ -4,6 +4,7 @@
  */
 
 import type { ExtractedAnnotation } from './types';
+import { copyPdfBytes } from './pdf-buffer-utils';
 
 // PDF annotation type number → name mapping (matches PDF spec & Python extractor)
 const ANNOT_TYPE_MAP: Record<number, string> = {
@@ -205,10 +206,12 @@ async function ensurePdfWorker() {
  * Returns a flat list of ExtractedAnnotation ready for DB insert.
  */
 export async function extractAnnotations(
-  buffer: ArrayBuffer,
+  buffer: Buffer | ArrayBuffer | Uint8Array,
   pdfName: string,
   pdfUrl: string = ''
 ): Promise<ExtractedAnnotation[]> {
+  const pdfBytes = copyPdfBytes(buffer);
+
   // Polyfill browser globals before importing pdfjs-dist
   ensureDOMMatrixPolyfill();
 
@@ -222,7 +225,7 @@ export async function extractAnnotations(
   await ensurePdfWorker();
 
   const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
+    data: pdfBytes,
     useWorkerFetch: false,
     isEvalSupported: false,
     disableFontFace: true,

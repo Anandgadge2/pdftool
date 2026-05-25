@@ -15,7 +15,13 @@ export type PdfNoteType =
   | 'box'
   | 'circle'
   | 'underline'
-  | 'marked_area';
+  | 'marked_area'
+  | 'scribble'
+  | 'unclear';
+
+export type NoteStatus = 'accepted' | 'needs_review' | 'ignored' | 'verified' | 'rejected';
+
+export type NoteSource = 'digital' | 'full_page_vision' | 'crop_vision' | 'manual';
 
 export const PDF_NOTE_TYPES: PdfNoteType[] = [
   'digital_comment',
@@ -27,6 +33,16 @@ export const PDF_NOTE_TYPES: PdfNoteType[] = [
   'circle',
   'underline',
   'marked_area',
+  'scribble',
+  'unclear',
+];
+
+export const NOTE_STATUSES: NoteStatus[] = [
+  'accepted',
+  'needs_review',
+  'ignored',
+  'verified',
+  'rejected',
 ];
 
 export interface BoundingBox {
@@ -48,24 +64,51 @@ export interface DigitalExtractedNote {
   rawData?: Record<string, unknown>;
 }
 
-export interface VisionExtractedNote {
-  noteType: PdfNoteType;
+/** Raw AI note shape (pass 1 / pass 2) */
+export interface RawVisionNote {
+  noteType: PdfNoteType | string;
   extractedText: string;
   summary?: string;
+  isMeaningfulReviewNote?: boolean;
   position: BoundingBox;
+  confidence: number;
+  reason?: string;
+  source?: NoteSource;
+  pageNumber?: number;
+}
+
+export interface PipelineNote extends RawVisionNote {
+  pageNumber: number;
+  status: NoteStatus;
+  source: NoteSource;
+  isMeaningfulReviewNote: boolean;
+  duplicateGroupId?: string;
+}
+
+export interface MarkupRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  regionType: PdfNoteType | string;
   confidence: number;
 }
 
-export interface VisionExtractionResult {
-  notes: VisionExtractedNote[];
+export interface PreprocessedPageImage {
+  originalBuffer: Buffer;
+  enhancedBuffer: Buffer;
+  width: number;
+  height: number;
 }
 
 export interface PdfPageImage {
   pageNumber: number;
   buffer: Buffer;
+  enhancedBuffer?: Buffer;
   width: number;
   height: number;
   mimeType: string;
+  imageHash?: string;
 }
 
 export interface PdfReviewNoteResponse {
@@ -73,12 +116,19 @@ export interface PdfReviewNoteResponse {
   pageNumber: number;
   noteType: PdfNoteType;
   extractedText: string;
+  correctedText: string | null;
   summary: string;
   author?: string | null;
   subject?: string | null;
   position: BoundingBox;
   confidence: number;
+  status: NoteStatus;
+  isMeaningfulReviewNote: boolean;
+  source: NoteSource;
   isManual: boolean;
+  verifiedByUser: boolean;
+  verifiedAt: string | null;
+  reason?: string | null;
 }
 
 export interface PdfReviewDocumentResponse {
@@ -100,6 +150,20 @@ export interface PdfReviewDocumentResponse {
   }>;
 }
 
+export interface AccuracyReport {
+  totalExtractedNotes: number;
+  acceptedNotes: number;
+  needsReviewNotes: number;
+  rejectedNotes: number;
+  verifiedNotes: number;
+  ignoredNotes: number;
+  duplicateNotesRemoved: number;
+  averageConfidence: number;
+  estimatedAccuracy: number;
+  missingNotesCount: number;
+  falsePositiveCount: number;
+}
+
 export interface NoteCreateInput {
   pageNumber: number;
   noteType: PdfNoteType;
@@ -114,6 +178,7 @@ export interface NoteCreateInput {
 
 export interface NoteUpdateInput {
   extractedText?: string;
+  correctedText?: string;
   summary?: string;
   noteType?: PdfNoteType;
   x?: number;
@@ -121,8 +186,16 @@ export interface NoteUpdateInput {
   width?: number;
   height?: number;
   confidence?: number;
+  status?: NoteStatus;
+  verifiedByUser?: boolean;
 }
 
-export const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+export const MAX_PDF_SIZE_BYTES = 50 * 1024 * 1024;
 
-export const PDF_RENDER_SCALE = 2;
+export const PDF_RENDER_SCALE = Number(process.env.PDF_RENDER_SCALE) || 3;
+
+export const MAX_CROPS_PER_PAGE = Number(process.env.MAX_CROPS_PER_PAGE) || 12;
+
+export const CONFIDENCE_AUTO_ACCEPT = 0.8;
+
+export const CONFIDENCE_NEEDS_REVIEW = 0.6;

@@ -28,16 +28,18 @@ export async function GET(
       'ID',
       'Page',
       'Note Type',
+      'Status',
+      'Source',
       'Extracted Text',
+      'Corrected Text',
       'Summary',
-      'Author',
-      'Subject',
+      'Meaningful',
       'X',
       'Y',
       'Width',
       'Height',
       'Confidence',
-      'Manual',
+      'Verified',
     ].join(',');
 
     const rows = notes.map((n) =>
@@ -45,16 +47,18 @@ export async function GET(
         n.id,
         n.page_number,
         escapeCsv(noteTypeLabel(n.note_type as Parameters<typeof noteTypeLabel>[0])),
+        escapeCsv(n.status),
+        escapeCsv(n.source),
         escapeCsv(n.extracted_text),
+        escapeCsv(n.corrected_text),
         escapeCsv(n.summary),
-        escapeCsv(n.author),
-        escapeCsv(n.subject),
+        n.is_meaningful_review_note ? 'Yes' : 'No',
         n.x ?? 0,
         n.y ?? 0,
         n.width ?? 0,
         n.height ?? 0,
         n.confidence ?? 0,
-        n.is_manual ? 'Yes' : 'No',
+        n.verified_by_user ? 'Yes' : 'No',
       ].join(',')
     );
 

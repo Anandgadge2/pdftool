@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { initDb, insertMarkups, getAssignees } from '@/lib/db';
+import { initDb, insertMarkups } from '@/lib/db';
 import { extractAnnotations } from '@/lib/pdf-extractor';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     const pdfName = file.name;
-    const buffer = await file.arrayBuffer();
+    const buffer = Buffer.from(await file.arrayBuffer());
 
     // Extract annotations from the PDF buffer
     const annotations = await extractAnnotations(buffer, pdfName, '');
@@ -49,6 +49,20 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     console.error('[POST /api/upload]', err);
-    return Response.json({ success: false, error: String(err) }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    const isInvalidPdf =
+      message.toLowerCase().includes('invalid pdf') ||
+      message.toLowerCase().includes('pdf structure') ||
+      message.toLowerCase().includes('missing pdf');
+
+    return Response.json(
+      {
+        success: false,
+        error: isInvalidPdf
+          ? 'This PDF could not be parsed. It may be corrupted, encrypted, or saved in an unsupported structure.'
+          : message,
+      },
+      { status: isInvalidPdf ? 400 : 500 }
+    );
   }
 }

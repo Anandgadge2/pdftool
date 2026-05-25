@@ -6,13 +6,15 @@ import PdfReviewUpload from '@/components/pdf-review/PdfReviewUpload';
 import PdfPagePreview from '@/components/pdf-review/PdfPagePreview';
 import ExtractedNotesPanel from '@/components/pdf-review/ExtractedNotesPanel';
 import type {
+  AccuracyReport,
+  NoteStatus,
   PdfDocumentStatus,
   PdfExtractionType,
   PdfNoteType,
   PdfReviewDocumentResponse,
   PdfReviewNoteResponse,
 } from '@/lib/pdf-review-types';
-import { PDF_NOTE_TYPES } from '@/lib/pdf-review-types';
+import { PDF_NOTE_TYPES, NOTE_STATUSES } from '@/lib/pdf-review-types';
 import '@/components/pdf-review/pdf-review.css';
 
 type FilterPage = number | 'all';
@@ -43,6 +45,15 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
   const [editText, setEditText] = useState('');
   const [editSummary, setEditSummary] = useState('');
   const [editType, setEditType] = useState<PdfNoteType>('handwritten_note');
+  const [editCorrected, setEditCorrected] = useState('');
+  const [editX, setEditX] = useState(0);
+  const [editY, setEditY] = useState(0);
+  const [editW, setEditW] = useState(100);
+  const [editH, setEditH] = useState(40);
+  const [statusFilters, setStatusFilters] = useState<Set<NoteStatus>>(
+    () => new Set(['accepted', 'needs_review', 'verified'] as NoteStatus[])
+  );
+  const [accuracy, setAccuracy] = useState<AccuracyReport | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const applyDocument = useCallback((data: PdfReviewDocumentResponse) => {
@@ -61,10 +72,17 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
   }, []);
 
   const fetchDocument = useCallback(async (id: number) => {
-    const res = await fetch(`/api/pdf-review/${id}`);
+    const res = await fetch(`/api/pdf-review/${id}?includeIgnored=true`);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to load document');
     applyDocument(data as PdfReviewDocumentResponse);
+    try {
+      const accRes = await fetch(`/api/pdf-review/${id}/accuracy-report`);
+      const accData = await accRes.json();
+      if (accData.success) setAccuracy(accData as AccuracyReport);
+    } catch {
+      /* optional */
+    }
     return data as PdfReviewDocumentResponse;
   }, [applyDocument]);
 
@@ -161,11 +179,40 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
     if (selectedNoteId === noteId) setSelectedNoteId(null);
   };
 
+  const patchNoteInState = (id: number, patch: Partial<PdfReviewNoteResponse>) => {
+    setNotes((prev) => prev.map((n) => (n.id === id ? { ...n, ...patch } : n)));
+  };
+
+  const handleVerifyNote = async (noteId: number) => {
+    const res = await fetch(`/api/pdf-review/notes/${noteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'verify' }),
+    });
+    const data = await res.json();
+    if (data.success) patchNoteInState(noteId, { status: 'verified', verifiedByUser: true });
+  };
+
+  const handleRejectNote = async (noteId: number) => {
+    const res = await fetch(`/api/pdf-review/notes/${noteId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reject' }),
+    });
+    const data = await res.json();
+    if (data.success) patchNoteInState(noteId, { status: 'rejected' });
+  };
+
   const openEditModal = (mode: 'edit' | 'add', note?: PdfReviewNoteResponse) => {
     setEditModal({ mode, note });
     setEditText(note?.extractedText ?? '');
+    setEditCorrected(note?.correctedText ?? note?.extractedText ?? '');
     setEditSummary(note?.summary ?? '');
     setEditType((note?.noteType as PdfNoteType) ?? 'handwritten_note');
+    setEditX(note?.position.x ?? 0);
+    setEditY(note?.position.y ?? 0);
+    setEditW(note?.position.width ?? 100);
+    setEditH(note?.position.height ?? 40);
   };
 
   const saveEditModal = async () => {
@@ -177,8 +224,13 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           extractedText: editText,
+          correctedText: editCorrected,
           summary: editSummary,
           noteType: editType,
+          x: editX,
+          y: editY,
+          width: editW,
+          height: editH,
         }),
       });
       const data = await res.json();
@@ -186,13 +238,13 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
         setError(data.error);
         return;
       }
-      setNotes((prev) =>
-        prev.map((n) =>
-          n.id === editModal.note!.id
-            ? { ...n, extractedText: editText, summary: editSummary, noteType: editType }
-            : n
-        )
-      );
+      patchNoteInState(editModal.note.id, {
+        extractedText: editText,
+        correctedText: editCorrected,
+        summary: editSummary,
+        noteType: editType,
+        position: { x: editX, y: editY, width: editW, height: editH },
+      });
     } else {
       const res = await fetch(`/api/pdf-review/${documentId}/notes`, {
         method: 'POST',
@@ -218,10 +270,16 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
           pageNumber: created.pageNumber,
           noteType: created.noteType,
           extractedText: created.extractedText,
+          correctedText: null,
           summary: created.summary ?? '',
           position: created.position ?? { x: 0, y: 0, width: 100, height: 40 },
           confidence: created.confidence ?? 1,
+          status: 'verified',
+          isMeaningfulReviewNote: true,
+          source: 'manual',
           isManual: true,
+          verifiedByUser: true,
+          verifiedAt: new Date().toISOString(),
         },
       ]);
     }
@@ -256,8 +314,11 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
                 {extractionType.replace(/_/g, ' ')} · {notes.length} notes
               </span>
             )}
-            {fileName && (
-              <span style={{ fontSize: '0.8125rem', fontWeight: 500 }}>{fileName}</span>
+            {fileName && <span className="pr-file-name">{fileName}</span>}
+            {accuracy && (
+              <span className="pr-accuracy-badge" title="Estimated accuracy">
+                ~{accuracy.estimatedAccuracy}% accuracy
+              </span>
             )}
           </div>
         )}
@@ -277,9 +338,9 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <span className="pr-spinner" />
               <div>
-                <strong>Processing PDF…</strong>
+                <strong>Processing PDF (two-pass vision)…</strong>
                 <p style={{ margin: '0.25rem 0 0', fontSize: '0.875rem', color: 'var(--pr-muted)' }}>
-                  Detecting digital annotations and image-based review notes. This may take a minute.
+                  Preprocessing → region detection → full page + crop refinement. May take 1–2 min.
                 </p>
               </div>
             </div>
@@ -301,6 +362,7 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
                 imageHeight={currentPageData?.height ?? null}
                 notes={notes}
                 selectedNoteId={selectedNoteId}
+                statusFilter={statusFilters}
                 onPageChange={setCurrentPage}
               />
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -331,9 +393,13 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
               notes={notes}
               totalPages={totalPages || pages.length || 1}
               selectedNoteId={selectedNoteId}
+              statusFilters={statusFilters}
+              onStatusFiltersChange={setStatusFilters}
               onSelectNote={handleSelectNote}
               onEditNote={(n) => openEditModal('edit', n)}
               onDeleteNote={handleDeleteNote}
+              onVerifyNote={handleVerifyNote}
+              onRejectNote={handleRejectNote}
               onAddNote={() => openEditModal('add')}
               filterPage={filterPage}
               onFilterPageChange={setFilterPage}
@@ -389,14 +455,33 @@ export default function PdfReviewApp({ embedded = false }: PdfReviewAppProps) {
               />
             </div>
             <div className="pr-form-group">
-              <label>Summary</label>
-              <input
-                className="pr-input"
-                style={{ width: '100%' }}
-                value={editSummary}
-                onChange={(e) => setEditSummary(e.target.value)}
-              />
+              <label>Corrected text (saved as verification)</label>
+              <textarea className="pr-textarea" value={editCorrected} onChange={(e) => setEditCorrected(e.target.value)} />
             </div>
+            <div className="pr-form-group">
+              <label>Summary</label>
+              <input className="pr-input" style={{ width: '100%' }} value={editSummary} onChange={(e) => setEditSummary(e.target.value)} />
+            </div>
+            {editModal.mode === 'edit' && (
+              <div className="pr-bbox-grid">
+                <div className="pr-form-group">
+                  <label>X</label>
+                  <input className="pr-input" type="number" value={editX} onChange={(e) => setEditX(Number(e.target.value))} />
+                </div>
+                <div className="pr-form-group">
+                  <label>Y</label>
+                  <input className="pr-input" type="number" value={editY} onChange={(e) => setEditY(Number(e.target.value))} />
+                </div>
+                <div className="pr-form-group">
+                  <label>Width</label>
+                  <input className="pr-input" type="number" value={editW} onChange={(e) => setEditW(Number(e.target.value))} />
+                </div>
+                <div className="pr-form-group">
+                  <label>Height</label>
+                  <input className="pr-input" type="number" value={editH} onChange={(e) => setEditH(Number(e.target.value))} />
+                </div>
+              </div>
+            )}
             <div className="pr-actions-row">
               <button type="button" className="pr-btn pr-btn-primary" onClick={() => void saveEditModal()}>
                 Save

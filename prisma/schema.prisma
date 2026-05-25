@@ -42,10 +42,12 @@ model PdfDocument {
   original_file_name   String
   cloudinary_public_id String?
   cloudinary_url       String?
+  file_hash            String?
   total_pages          Int                @default(0)
   status               String             @default("uploaded")
   extraction_type      String?            @default("none")
   error_message        String?
+  extraction_meta      Json?
   created_at           DateTime           @default(now())
   updated_at           DateTime           @updatedAt
   pages                PdfPage[]
@@ -60,6 +62,8 @@ model PdfPage {
   page_number          Int
   cloudinary_public_id String?
   image_url            String?
+  enhanced_image_url   String?
+  image_hash           String?
   width                Int?
   height               Int?
   created_at           DateTime           @default(now())
@@ -71,26 +75,35 @@ model PdfPage {
 }
 
 model PdfExtractedNote {
-  id             Int         @id @default(autoincrement())
-  document_id    Int
-  page_id        Int?
-  page_number    Int
-  note_type      String
-  extracted_text String?     @default("")
-  summary        String?     @default("")
-  x              Float?
-  y              Float?
-  width          Float?
-  height         Float?
-  confidence     Float?      @default(0)
-  author         String?
-  subject        String?
-  is_manual      Boolean     @default(false)
-  raw_data       Json?
-  created_at     DateTime    @default(now())
-  updated_at     DateTime    @updatedAt
-  document       PdfDocument @relation(fields: [document_id], references: [id], onDelete: Cascade)
-  page           PdfPage?    @relation(fields: [page_id], references: [id], onDelete: SetNull)
+  id                       Int         @id @default(autoincrement())
+  document_id              Int
+  page_id                  Int?
+  page_number              Int
+  note_type                String
+  extracted_text           String?     @default("")
+  corrected_text           String?
+  summary                  String?     @default("")
+  x                        Float?
+  y                        Float?
+  width                    Float?
+  height                   Float?
+  confidence               Float?      @default(0)
+  status                   String      @default("needs_review")
+  is_meaningful_review_note Boolean    @default(true)
+  source                   String      @default("full_page_vision")
+  author                   String?
+  subject                  String?
+  is_manual                Boolean     @default(false)
+  verified_by_user         Boolean     @default(false)
+  verified_at              DateTime?
+  parent_note_id           Int?
+  duplicate_group_id       String?
+  raw_data                 Json?
+  correction_history       Json?
+  created_at               DateTime    @default(now())
+  updated_at               DateTime    @updatedAt
+  document                 PdfDocument @relation(fields: [document_id], references: [id], onDelete: Cascade)
+  page                     PdfPage?    @relation(fields: [page_id], references: [id], onDelete: SetNull)
 
   @@map("pdf_extracted_notes")
 }

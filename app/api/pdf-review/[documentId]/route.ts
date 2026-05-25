@@ -4,7 +4,7 @@ import { getDocumentResponse } from '@/services/pdfReviewService';
 export const dynamic = 'force-dynamic';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ documentId: string }> }
 ) {
   try {
@@ -15,7 +15,8 @@ export async function GET(
       return Response.json({ success: false, error: 'Invalid document ID' }, { status: 400 });
     }
 
-    const result = await getDocumentResponse(documentId);
+    const includeIgnored = request.nextUrl.searchParams.get('includeIgnored') === 'true';
+    const result = await getDocumentResponse(documentId, { includeIgnored });
     return Response.json(result);
   } catch (err) {
     console.error('[GET /api/pdf-review/:documentId]', err);
