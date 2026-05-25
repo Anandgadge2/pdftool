@@ -39,6 +39,9 @@ def init_db(db_path=DEFAULT_DB_PATH):
             created_at TEXT
         )
     """)
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_markups_status ON markups(status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_markups_priority ON markups(priority)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_markups_pdf_name ON markups(pdf_name)")
     conn.commit()
     conn.close()
 
@@ -199,3 +202,53 @@ def get_unique_values(column_name, db_path=DEFAULT_DB_PATH):
     conn.close()
     
     return [row[0] for row in rows]
+
+
+def _build_filter_query(filters=None, search=None):
+    query = " FROM markups"
+    params = []
+    clauses = []
+    if filters:
+        for col, val in filters.items():
+            if val in (None, "", []):
+                continue
+            if isinstance(val, list):
+                placeholders = ",".join(["?"] * len(val))
+                clauses.append(f"{col} IN ({placeholders})")
+                params.extend(val)
+            else:
+                clauses.append(f"{col} = ?")
+                params.append(val)
+    if search:
+        clauses.append("(pdf_name LIKE ? OR comment_text LIKE ? OR author LIKE ? OR annotation_type LIKE ?)")
+        pattern = f"%{search.strip()}%"
+        params.extend([pattern, pattern, pattern, pattern])
+    if clauses:
+        query += " WHERE " + " AND ".join(clauses)
+    return query, params
+
+def count_markups(filters=None, search=None, db_path=DEFAULT_DB_PATH):
+    init_db(db_path)
+    conn = get_connection(db_path)
+    cursor = conn.cursor()
+    q, params = _build_filter_query(filters, search)
+    cursor.execute("SELECT COUNT(*)" + q, params)
+    total = cursor.fetchone()[0]
+    conn.close()
+    return total
+
+def fetch_markups_paginated(filters=None, search=None, limit=25, offset=0, sort_by="id", sort_dir="DESC", db_path=DEFAULT_DB_PATH):
+    init_db(db_path)
+    conn = get_connection(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    allowed_sort = {"id", "page_number", "status", "priority", "pdf_name", "annotation_type"}
+    safe_sort = sort_by if sort_by in allowed_sort else "id"
+    safe_dir = "ASC" if str(sort_dir).upper() == "ASC" else "DESC"
+    q, params = _build_filter_query(filters, search)
+    query = f"SELECT *{q} ORDER BY {safe_sort} {safe_dir} LIMIT ? OFFSET ?"
+    params.extend([limit, offset])
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
