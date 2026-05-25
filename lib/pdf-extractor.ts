@@ -151,18 +151,20 @@ export async function extractAnnotations(
     return await import('pdfjs-dist');
   });
 
-  // Set the worker source path using absolute resolution for Node.js compatibility
+  // In serverless Node runtimes (e.g. Vercel), resolving a worker file path can fail
+  // because bundlers may not preserve node_modules file locations. We disable workers
+  // for reliability and keep parsing on the main thread.
   const pdfjs = (pdfjsLib as any).default ?? pdfjsLib;
   if (pdfjs.GlobalWorkerOptions) {
-    const path = await import('path');
-    const { pathToFileURL } = await import('url');
-    const resolvedPath = path.resolve(
-      './node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs'
-    );
-    pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(resolvedPath).href;
+    pdfjs.GlobalWorkerOptions.workerSrc = '';
   }
 
-  const loadingTask = pdfjs.getDocument({ data: new Uint8Array(buffer), useWorkerFetch: false, isEvalSupported: false });
+  const loadingTask = pdfjs.getDocument({
+    data: new Uint8Array(buffer),
+    useWorkerFetch: false,
+    isEvalSupported: false,
+    disableWorker: true,
+  });
   const doc = await loadingTask.promise;
 
   const results: ExtractedAnnotation[] = [];
